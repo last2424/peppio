@@ -149,17 +149,17 @@ class Canvas {
             document.getElementById('chatInput').focus();
         }
 		
-		if(key == global.KEY_LEFT){
+		if(key === global.KEY_LEFT){
 			global.moveToDir = 0;
 		}
-		if(key == global.KEY_RIGHT){
+		if(key === global.KEY_RIGHT){
 			global.moveToDir = 1;
 		}
 
-		if(key == global.KEY_DOWN){
+		if(key === global.KEY_DOWN){
 			global.moveToDir = 2;
 		}
-		if(key == global.KEY_UP){
+		if(key === global.KEY_UP){
 			global.moveToDir = 3;
 		}
     }
