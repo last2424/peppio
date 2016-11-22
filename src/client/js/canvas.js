@@ -1,5 +1,5 @@
 var global = require('./global');
-
+	var k1 = false;
 class Canvas {
     constructor(params) {
         this.directionLock = false;
@@ -25,7 +25,6 @@ class Canvas {
         this.cv.parent = self;
         global.canvas = this;
     }
-
     // Function called when a key is pressed, will change direction if arrow key.
     directionDown(event) {
     	var key = event.which || event.keyCode;
@@ -37,6 +36,13 @@ class Canvas {
     			self.socket.emit('0', self.target);
     		}
     	}
+		if (key === global.KEY_FIREFOOD && self.reenviar) {
+			if(!k1){
+            self.socket.emit('1');
+            self.reenviar = false;
+			k1 = true;
+			}
+        }
     }
 
     // Function called when a key is lifted, will change direction if arrow key.
@@ -49,6 +55,11 @@ class Canvas {
     			this.socket.emit('0', this.target);
     		}
     	}
+		if (key === global.KEY_FIREFOOD) {
+			if(k1){
+			k1 = false;
+			}
+        }
     }
 
     // Updates the direction array including information about the new direction.
@@ -92,6 +103,20 @@ class Canvas {
     	}
     //	this.target.x += directionHorizontal;
     //	this.target.y += directionVertical;
+		if(directionHorizontal > 0){
+			global.moveToDir = 0;
+		}
+		if(directionHorizontal < 0){
+			global.moveToDir = 1;
+		}
+		else
+		if(directionVertical > 0){
+			global.moveToDir = 2;
+		}
+		else
+		if(directionVertical < 0){
+			global.moveToDir = 3;
+		}
         global.target = this.target;
     }
 
@@ -136,11 +161,7 @@ class Canvas {
     // Chat command callback functions.
     keyInput(event) {
     	var key = event.which || event.keyCode;
-    	if (key === global.KEY_FIREFOOD && this.parent.reenviar) {
-            this.parent.socket.emit('1');
-            this.parent.reenviar = false;
-        }
-        else if (key === global.KEY_SPLIT && this.parent.reenviar) {
+        if (key === global.KEY_SPLIT && this.parent.reenviar) {
             document.getElementById('split_cell').play();
             this.parent.socket.emit('2');
             this.parent.reenviar = false;
@@ -148,20 +169,6 @@ class Canvas {
         else if (key === global.KEY_CHAT) {
             document.getElementById('chatInput').focus();
         }
-		
-		if(key === global.KEY_LEFT){
-			global.moveToDir = 0;
-		}
-		if(key === global.KEY_RIGHT){
-			global.moveToDir = 1;
-		}
-
-		if(key === global.KEY_DOWN){
-			global.moveToDir = 2;
-		}
-		if(key === global.KEY_UP){
-			global.moveToDir = 3;
-		}
     }
 }
 
