@@ -79,7 +79,13 @@ function addVirus(toAdd) {
             mass: mass,
             fill: c.virus.fill,
             stroke: c.virus.stroke,
-            strokeWidth: c.virus.strokeWidth
+            strokeWidth: c.virus.strokeWidth,
+			stageMove: 0,
+			move: false,
+			target: {
+				x: 0,
+				y: 0
+			}
         });
     }
 }
@@ -94,6 +100,53 @@ function movePlayer(player) {
     var x =0,y =0;
     for(var i=0; i<player.cells.length; i++)
     {
+		
+		if(player.frame === -1){
+			player.frame += 1;
+		}else{
+			player.frame += 1;
+			if(player.frame >= 5){
+				player.sx = 323;
+				player.sw = 164;
+				player.sh = 173;
+			}		
+			if(player.frame >= 10){
+				player.sx = 563;
+				player.sw = 175;
+				player.sh = 174;
+			}
+			if(player.frame >= 15){
+				player.sx = 89+236;
+			}
+			if(player.frame >= 20){
+				player.sx = 89;
+				player.sw = 152;
+				player.sh = 175;
+				player.frame = 0;
+			}
+		}
+		
+		if(player.dir === 0){
+			player.target.x = 50;
+			player.target.y = 0;
+			player.rot = 0;
+		}
+		if(player.dir === 1){
+			player.target.x = -50;
+			player.target.y = 0;
+			player.rot = -3.14;
+		}
+		if(player.dir === 2){
+			player.target.x = 0;
+			player.target.y = 50;
+			player.rot = 1.57;
+		}
+		if(player.dir === 3){
+			player.target.x = 0;
+			player.target.y = -50;
+			player.rot = -1.57;
+		}
+		
         var target = {
             x: player.x - player.cells[i].x + player.target.x,
             y: player.y - player.cells[i].y + player.target.y
@@ -265,7 +318,13 @@ io.on('connection', function (socket) {
         target: {
             x: 0,
             y: 0
-        }
+        },
+		frame: -1,
+		sx: 89,
+		sy: 62,
+		sw: 152,
+		sh: 175,
+		rot: 0
     };
 
     socket.on('gotit', function (player) {
@@ -405,7 +464,6 @@ io.on('connection', function (socket) {
     socket.on('0', function(target) {
         currentPlayer.lastHeartbeat = new Date().getTime();
         if (target.x !== currentPlayer.x || target.y !== currentPlayer.y) {
-            currentPlayer.target = target;
 			currentPlayer.dir = target.dir;
         }
     });
@@ -484,6 +542,11 @@ function tickPlayer(currentPlayer) {
     function funcFood(f) {
         return SAT.pointInCircle(new V(f.x, f.y), playerCircle);
     }
+	
+	function shotFood(f) {
+		return { res: SAT.pointInCircle(new V(f.x, f.y), virusCircle), r: f };
+    }
+
 
     function deleteFood(f) {
         food[f] = {};
@@ -526,9 +589,10 @@ function tickPlayer(currentPlayer) {
 
     function collisionCheck(collision) {
         if (collision.aUser.mass > collision.bUser.mass * 1.1  && collision.aUser.radius > Math.sqrt(Math.pow(collision.aUser.x - collision.bUser.x, 2) + Math.pow(collision.aUser.y - collision.bUser.y, 2))*1.75) {
-            console.log('[DEBUG] Killing user: ' + collision.bUser.id);
+			console.log('[DEBUG] Killing user: ' + collision.bUser.id);
             console.log('[DEBUG] Collision info:');
             console.log(collision);
+			console.log(collision.aUser.mass + " > " + collision.bUser.mass + " * 1.1"+(collision.bUser.mass * 1.1) + " &&" + collision.aUser.radius + " > " + Math.sqrt(Math.pow(collision.aUser.x - collision.bUser.x, 2) + Math.pow(collision.aUser.y - collision.bUser.y, 2))*1.75);
 
             var numUser = util.findIndex(users, collision.bUser.id);
             if (numUser > -1) {
@@ -552,7 +616,6 @@ function tickPlayer(currentPlayer) {
             new V(currentCell.x, currentCell.y),
             currentCell.radius
         );
-
         var foodEaten = food.map(funcFood)
             .reduce( function(a, b, c) { return b ? a.concat(c) : a; }, []);
 
@@ -561,11 +624,13 @@ function tickPlayer(currentPlayer) {
         var massEaten = massFood.map(eatMass)
             .reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
 
-        var virusCollision = virus.map(funcFood)
-           .reduce( function(a, b, c) { return b ? a.concat(c) : a; }, []);
+        var virusCollision = virus.map(funcFood).reduce( function(a, b, c) { return b ? a.concat(c) : a; }, []);
 
-        if(virusCollision > 0 && currentCell.mass > virus[virusCollision].mass) {
+		   
+		  
+        if(virusCollision > 0 && currentCell.radius > virus[virusCollision].radius+10) {
           sockets[currentPlayer.id].emit('virusSplit', z);
+		  virus.splice(virusCollision, 1);
         }
 
         var masaGanada = 0;
@@ -596,6 +661,54 @@ function tickPlayer(currentPlayer) {
 
         playerCollisions.forEach(collisionCheck);
     }
+	
+	
+    for(var y=0; y<virus.length; y++) {
+        var vir = virus[y];
+        var virusCircle = new C(
+            new V(vir.x, vir.y),
+            vir.radius
+        );
+		var shotCollision;
+		shotCollision = massFood.map(shotFood);
+		for(var i = 0; i < shotCollision.length; i++){
+		if(shotCollision.length > 0 && shotCollision[i].res){
+		if(virus[y].stageMove >= 4){
+			virus[y].move = true;
+			virus[y].target.x = shotCollision[i].r.target.x;
+			virus[y].target.y = shotCollision[i].r.target.y;
+			virus[y].stageMove = 0;
+		}else{
+		virus[y].stageMove += 1;
+		}
+		virus[y].radius += 25;
+		massFood.splice(massFood.indexOf(shotCollision[i].r), 1);
+		}
+		}
+		
+		
+		if(virus[y].move){
+			virus[y].target.x = (virus[y].target.x > 0) ? virus[y].target.x - 1 : virus[y].target.x + 1;
+			virus[y].target.y = (virus[y].target.y > 0) ? virus[y].target.y - 1 : virus[y].target.y + 1;
+			virus[y].x += virus[y].target.x;
+            virus[y].y += virus[y].target.y;
+			var borderCalc = virus[y].radius;
+			if (virus[y].x > c.gameWidth - borderCalc) {
+				virus[y].x = c.gameWidth - borderCalc;
+			}
+			if (virus[y].y > c.gameHeight - borderCalc) {
+				virus[y].y = c.gameHeight - borderCalc;
+			}
+			if (virus[y].x < borderCalc) {
+				virus[y].x = borderCalc;
+			}
+			if (virus[y].y < borderCalc) {
+				virus[y].y = borderCalc;
+			}
+			virus[y].move = (virus[y].target.x === 0 && virus[y].target.y === 0) ? false : true;
+		}
+	}
+
 }
 
 function moveloop() {
@@ -704,7 +817,13 @@ function sendUpdates() {
                                 massTotal: Math.round(f.massTotal),
                                 hue: f.hue,
                                 name: f.name,
-								dir: f.dir
+								dir: f.dir,
+								frame: f.frame,
+								sx: f.sx,
+								sy: f.sy,
+								sw: f.sw,
+								sh: f.sh,
+								rot: f.rot
                             };
                         } else {
                             //console.log("Nombre: " + f.name + " Es Usuario");
@@ -714,7 +833,13 @@ function sendUpdates() {
                                 cells: f.cells,
                                 massTotal: Math.round(f.massTotal),
                                 hue: f.hue,
-								dir: f.dir
+								dir: f.dir,
+								frame: f.frame,
+								sx: f.sx,
+								sy: f.sy,
+								sw: f.sw,
+								sh: f.sh,
+								rot: f.rot
                             };
                         }
                     }
