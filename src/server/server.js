@@ -557,8 +557,7 @@ function tickPlayer(currentPlayer) {
         if(SAT.pointInCircle(new V(m.x, m.y), playerCircle)){
             if(m.id == currentPlayer.id && m.speed > 0 && z == m.num)
                 return false;
-            if(currentCell.mass > m.masa * 1.1)
-                return true;
+            return true;
         }
         return false;
     }
@@ -578,7 +577,8 @@ function tickPlayer(currentPlayer) {
                         x: user.cells[i].x,
                         y: user.cells[i].y,
                         num: i,
-                        mass: user.cells[i].mass
+                        mass: user.cells[i].mass,
+						radius: user.cells[i].radius
                     };
                     playerCollisions.push(response);
                 }
@@ -588,11 +588,18 @@ function tickPlayer(currentPlayer) {
     }
 
     function collisionCheck(collision) {
-        if (collision.aUser.mass > collision.bUser.mass * 1.1  && collision.aUser.radius > Math.sqrt(Math.pow(collision.aUser.x - collision.bUser.x, 2) + Math.pow(collision.aUser.y - collision.bUser.y, 2))*1.75) {
+		var p2 = new C(
+            new V(collision.bUser.x, collision.bUser.y),
+            collision.bUser.radius
+        );
+		
+		var proc = (collision.aUser.radius - collision.bUser.radius);
+        if(SAT.pointInCircle(new V(collision.aUser.x, collision.aUser.y), p2) && proc >= 5){
+		//if (collision.aUser.mass > collision.bUser.mass * 1.1  && collision.aUser.radius > Math.sqrt(Math.pow(collision.aUser.x - collision.bUser.x, 2) + Math.pow(collision.aUser.y - collision.bUser.y, 2))*1.75) {
 			console.log('[DEBUG] Killing user: ' + collision.bUser.id);
             console.log('[DEBUG] Collision info:');
             console.log(collision);
-			console.log(collision.aUser.mass + " > " + collision.bUser.mass + " * 1.1"+(collision.bUser.mass * 1.1) + " &&" + collision.aUser.radius + " > " + Math.sqrt(Math.pow(collision.aUser.x - collision.bUser.x, 2) + Math.pow(collision.aUser.y - collision.bUser.y, 2))*1.75);
+		//	console.log(collision.aUser.mass + " > " + collision.bUser.mass + " * 1.1"+(collision.bUser.mass * 1.1) + " &&" + collision.aUser.radius + " > " + Math.sqrt(Math.pow(collision.aUser.x - collision.bUser.x, 2) + Math.pow(collision.aUser.y - collision.bUser.y, 2))*1.75);
 
             var numUser = util.findIndex(users, collision.bUser.id);
             if (numUser > -1) {
@@ -673,7 +680,7 @@ function tickPlayer(currentPlayer) {
 		shotCollision = massFood.map(shotFood);
 		for(var i = 0; i < shotCollision.length; i++){
 		if(shotCollision.length > 0 && shotCollision[i].res){
-		if(virus[y].stageMove >= 4){
+		if(virus[y].stageMove >= 7){
 			virus[y].move = true;
 			virus[y].target.x = shotCollision[i].r.target.x;
 			virus[y].target.y = shotCollision[i].r.target.y;
@@ -681,7 +688,7 @@ function tickPlayer(currentPlayer) {
 		}else{
 		virus[y].stageMove += 1;
 		}
-		virus[y].radius += 25;
+		virus[y].radius += 1;
 		massFood.splice(massFood.indexOf(shotCollision[i].r), 1);
 		}
 		}
