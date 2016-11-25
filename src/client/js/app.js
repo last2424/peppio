@@ -10,6 +10,8 @@ var pac = {
 	img: new Image(),
 };
 pac.img.src = "../img/main.png";
+var bomb = new Image();
+bomb.src = "../img/bbm.png";
 
 var debug = function(args) {
     if (console && console.log) {
@@ -363,9 +365,11 @@ function drawVirus(virus) {
     graph.strokeStyle = virus.stroke;
     graph.fillStyle = virus.fill;
     graph.lineWidth = virus.strokeWidth;
-    drawCircle(virus.x - player.x + global.screenWidth / 2,
-               virus.y - player.y + global.screenHeight / 2,
-               virus.radius, global.virusSides);
+   // drawCircle(virus.x - player.x + global.screenWidth / 2,
+     //          virus.y - player.y + global.screenHeight / 2,
+       //        virus.radius, global.virusSides);
+	graph.drawImage(bomb, (virus.x - player.x + global.screenWidth / 2)-virus.radius-virus.radius/6,
+               (virus.y - player.y + global.screenHeight / 2)-virus.radius-virus.radius/3, virus.radius*2.5, virus.radius*2.5);
 }
 
 function drawFireFood(mass) {
