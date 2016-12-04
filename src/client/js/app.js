@@ -355,11 +355,11 @@ function drawPacMan(centerX, centerY, radius, sides) {
 
 
 function drawWalls(walls) {
-    graph.strokeStyle = 'hsl(' + walls.hue + ', 100%, 45%)';
-    graph.fillStyle = 'hsl(' + walls.hue + ', 100%, 50%)';
-    graph.lineWidth = foodConfig.border;
-    graph.drawImage(bomb, 1242, 799+22*walls.hue, 22, 22, (walls.x - player.x + global.screenWidth / 2)-walls.radius-walls.radius/6,
-               (walls.y - player.y + global.screenHeight / 2)-walls.radius-walls.radius/3, walls.radius*2.5,walls.radius*2.5);
+    //graph.strokeStyle = 'hsl(' + walls.hue + ', 100%, 45%)';
+    //graph.fillStyle = 'hsl(' + walls.hue + ', 100%, 50%)';
+   // graph.lineWidth = foodConfig.border;
+  //  graph.drawImage(bomb, 1242, 799+22*walls.hue, 22, 22, (walls.x - player.x + global.screenWidth / 2)-walls.radius-walls.radius/6,
+      //         (walls.y - player.y + global.screenHeight / 2)-walls.radius-walls.radius/3, walls.radius*2.5,walls.radius*2.5);
 }
 function drawFood(food) {
     graph.strokeStyle = 'hsl(' + food.hue + ', 100%, 45%)';

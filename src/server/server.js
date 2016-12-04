@@ -898,7 +898,7 @@ function sendUpdates() {
                 }
             })
             .filter(function(f) { return f; });
-        var visibleWalls  = walls
+    /*    var visibleWalls  = walls
             .map(function(f) {
                 if ( f.x > u.x - u.screenWidth/2 - 22        &&
                     f.x < u.x + u.screenWidth/2 + 22 &&
@@ -907,7 +907,7 @@ function sendUpdates() {
                     return f;
                 }
             })
-            .filter(function(f) { return f; });
+            .filter(function(f) { return f; });*/
 
 
         var visibleVirus  = virus
@@ -982,7 +982,7 @@ function sendUpdates() {
             })
             .filter(function(f) { return f; });
 
-        sockets[u.id].emit('serverTellPlayerMove', visibleCells, visibleFood, visibleMass, visibleVirus,visibleWalls);
+        sockets[u.id].emit('serverTellPlayerMove', visibleCells, visibleFood, visibleMass, visibleVirus, null);
         if (leaderboardChanged) {
             sockets[u.id].emit('leaderboard', {
                 players: users.length,
