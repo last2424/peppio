@@ -21,6 +21,7 @@ var tree = quadtree(0, 0, c.gameWidth, c.gameHeight);
 var users = [];
 var massFood = [];
 var food = [];
+var walls = [];
 var virus = [];
 var sockets = {};
 
@@ -63,6 +64,24 @@ radius: radius,
 mass: Math.random() + 2,
 hue: Math.round(Math.random() * 360)
 });
+walls.push({
+// Make IDs unique.
+id: ((new Date()).getTime() + '' + walls.length) > 0,
+x: (position.x*c.cellSize)-c.cellSize,
+y: (position.y*c.cellSize)-c.cellSize,
+radius: 23,
+mass: Math.random() + 2,
+hue: 0
+});
+walls.push({
+// Make IDs unique.
+id: ((new Date()).getTime() + '' + walls.length) > 0,
+x: (position.x*c.cellSize)-c.cellSize,
+y: (position.y*c.cellSize)-c.cellSize+23,
+radius: 23,
+mass: Math.random() + 2,
+hue: 21
+});
 }
 }
 
@@ -88,7 +107,7 @@ function addVirus(toAdd) {
 			}
         });
     }
-}
+}//GANHRIST
 
 function removeFood(toRem) {
     while (toRem--) {
@@ -105,23 +124,59 @@ function movePlayer(player) {
 			player.frame += 1;
 		}else{
 			player.frame += 1;
-			if(player.frame >= 5){
-				player.sx = 323;
-				player.sw = 164;
-				player.sh = 173;
+			if(player.frame >= 8){
+				if(player.sex === 0){
+				player.sw = 166;
+				player.sh = 166;
+				player.sx = 362;
+				player.sy = 458;
+				}else if(player.sex == 1) {
+				player.sw = 187;
+				player.sh = 187;
+				player.sx = 1361;
+				player.sy = 437;	
+				}else {
+                    player.sw = 197;
+                    player.sh = 197;
+                    player.sx = 1866;
+                    player.sy = 124;
+                }
 			}		
-			if(player.frame >= 10){
-				player.sx = 563;
-				player.sw = 175;
-				player.sh = 174;
+			if(player.frame >= 16){
+				if(player.sex === 0){
+				player.sw = 166;
+				player.sh = 166;
+				player.sx = 602;
+				player.sy = 460;
+				}else if(player.sex == 1) {
+				player.sw = 187;
+				player.sh = 187;
+				player.sx = 1112;
+				player.sy = 437;
+				}else {
+                    player.sw = 197;
+                    player.sh = 197;
+                    player.sx = 2085;
+                    player.sy = 124;
+                }
 			}
-			if(player.frame >= 15){
-				player.sx = 89+236;
-			}
-			if(player.frame >= 20){
-				player.sx = 89;
-				player.sw = 152;
-				player.sh = 175;
+			if(player.frame >= 24){
+				if(player.sex === 0){
+				player.sw = 166;
+				player.sh = 166;
+				player.sx = 129;
+				player.sy = 453;
+				}else if(player.sex == 1){
+				player.sw = 187;
+				player.sh = 187;
+				player.sx = 873;
+				player.sy = 437;
+				}else {
+                    player.sw = 197;
+                    player.sh = 197;
+                    player.sx = 2333;
+                    player.sy = 124;
+                }
 				player.frame = 0;
 			}
 		}
@@ -320,13 +375,17 @@ io.on('connection', function (socket) {
             y: 0
         },
 		frame: -1,
-		sx: 89,
-		sy: 62,
-		sw: 152,
-		sh: 175,
+		sex: Math.round(Math.random() *2),
+		sx: 0,
+		sy: 0,
+		sw: 0,
+		sh: 0,
 		rot: 0
     };
-
+	currentPlayer.sx = (currentPlayer.sex === 0) ? 129 : 873;
+	currentPlayer.sy = (currentPlayer.sex === 0) ? 437 : 437;
+	currentPlayer.sw = (currentPlayer.sex === 0) ? 166 : 187;
+	currentPlayer.sh = (currentPlayer.sex === 0) ? 166 : 187;
     socket.on('gotit', function (player) {
         console.log('[INFO] Player ' + player.name + ' connecting!');
 
@@ -492,7 +551,14 @@ io.on('connection', function (socket) {
                     x: currentPlayer.cells[i].x,
                     y: currentPlayer.cells[i].y,
                     radius: util.massToRadius(masa),
-                    speed: 25
+                    speed: 25,
+					spritenum: Math.floor(Math.random() * (4 - 1 + 1)) + 1,
+					sprite: {
+						sx: 0,
+						sy: 0,
+						sw: 0,
+						sh: 0
+					}
                 });
             }
         }
@@ -723,6 +789,55 @@ function moveloop() {
         tickPlayer(users[i]);
     }
     for (i=0; i < massFood.length; i++) {
+		if(massFood[i].spritenum === 1) {
+			if((massFood[i].sprite.sx === 0 || massFood[i].sprite.sy === 0) || (massFood[i].sprite.sx === 236 || massFood[i].sprite.sy === 1289)) {
+				massFood[i].sprite.sx = 228;
+				massFood[i].sprite.sy = 1144;
+				massFood[i].sprite.sw = 111;
+				massFood[i].sprite.sh = 113;
+			}else if((massFood[i].sprite.sx === 0 || massFood[i].sprite.sy === 0) || (massFood[i].sprite.sx === 228 || massFood[i].sprite.sy === 1144)){
+				massFood[i].sprite.sx = 236;
+				massFood[i].sprite.sy = 1289;
+				massFood[i].sprite.sw = 111;
+				massFood[i].sprite.sh = 113;
+			}
+		}else if(massFood[i].spritenum === 2){
+			if((massFood[i].sprite.sx = 0 || massFood[i].sprite.sy === 0) || (massFood[i].sprite.sx === 489 || massFood[i].sprite.sy === 1280)) {
+				massFood[i].sprite.sx = 481;
+				massFood[i].sprite.sy = 1135;
+				massFood[i].sprite.sw = 111;
+				massFood[i].sprite.sh = 113;
+			}else if((massFood[i].sprite.sx === 0 || massFood[i].sprite.sy === 0) || (massFood[i].sprite.sx === 481 || massFood[i].sprite.sy === 1135)){
+				massFood[i].sprite.sx = 489;
+				massFood[i].sprite.sy = 1280;
+				massFood[i].sprite.sw = 111;
+				massFood[i].sprite.sh = 113;
+			}
+		}else if(massFood[i].spritenum === 3){
+			if((massFood[i].sprite.sx = 0 || massFood[i].sprite.sy === 0) || (massFood[i].sprite.sx === 734 || massFood[i].sprite.sy === 1297)) {
+				massFood[i].sprite.sx = 726;
+				massFood[i].sprite.sy = 1153;
+				massFood[i].sprite.sw = 111;
+				massFood[i].sprite.sh = 113;
+			}else if((massFood[i].sprite.sx === 0 || massFood[i].sprite.sy === 0) || (massFood[i].sprite.sx === 726 || massFood[i].sprite.sy === 1153)){
+				massFood[i].sprite.sx = 734;
+				massFood[i].sprite.sy = 1297;
+				massFood[i].sprite.sw = 111;
+				massFood[i].sprite.sh = 113;
+			}
+		}else if(massFood[i].spritenum === 4){
+			if((massFood[i].sprite.sx = 0 || massFood[i].sprite.sy === 0) || (massFood[i].sprite.sx === 981 || massFood[i].sprite.sy === 1296)) {
+				massFood[i].sprite.sx = 973;
+				massFood[i].sprite.sy = 1151;
+				massFood[i].sprite.sw = 111;
+				massFood[i].sprite.sh = 113;
+			}else if((massFood[i].sprite.sx === 0 || massFood[i].sprite.sy === 0) || (massFood[i].sprite.sx === 973 || massFood[i].sprite.sy === 1151)){
+				massFood[i].sprite.sx = 981;
+				massFood[i].sprite.sy = 1296;
+				massFood[i].sprite.sw = 111;
+				massFood[i].sprite.sh = 113;
+			}
+		}
         if(massFood[i].speed > 0) moveMass(massFood[i]);
     }
 }
@@ -783,6 +898,17 @@ function sendUpdates() {
                 }
             })
             .filter(function(f) { return f; });
+        var visibleWalls  = walls
+            .map(function(f) {
+                if ( f.x > u.x - u.screenWidth/2 - 22        &&
+                    f.x < u.x + u.screenWidth/2 + 22 &&
+                    f.y > u.y - u.screenHeight/2 - 440 &&
+                    f.y < u.y + u.screenHeight/2 + 440) {
+                    return f;
+                }
+            })
+            .filter(function(f) { return f; });
+
 
         var visibleVirus  = virus
             .map(function(f) {
@@ -830,7 +956,8 @@ function sendUpdates() {
 								sy: f.sy,
 								sw: f.sw,
 								sh: f.sh,
-								rot: f.rot
+								rot: f.rot,
+								sex: f.sex
                             };
                         } else {
                             //console.log("Nombre: " + f.name + " Es Usuario");
@@ -846,7 +973,8 @@ function sendUpdates() {
 								sy: f.sy,
 								sw: f.sw,
 								sh: f.sh,
-								rot: f.rot
+								rot: f.rot,
+								sex: f.sex
                             };
                         }
                     }
@@ -854,7 +982,7 @@ function sendUpdates() {
             })
             .filter(function(f) { return f; });
 
-        sockets[u.id].emit('serverTellPlayerMove', visibleCells, visibleFood, visibleMass, visibleVirus);
+        sockets[u.id].emit('serverTellPlayerMove', visibleCells, visibleFood, visibleMass, visibleVirus,visibleWalls);
         if (leaderboardChanged) {
             sockets[u.id].emit('leaderboard', {
                 players: users.length,

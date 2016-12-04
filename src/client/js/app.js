@@ -9,9 +9,9 @@ var reason;
 var pac = {
 	img: new Image(),
 };
-pac.img.src = "../img/main.png";
+pac.img.src = "../img/sprites.png";
 var bomb = new Image();
-bomb.src = "../img/bbm.png";
+bomb.src = "../img/sprites.png";
 
 var debug = function(args) {
     if (console && console.log) {
@@ -125,6 +125,7 @@ global.player = player;
 
 var foods = [];
 var viruses = [];
+var walls = [];
 var fireFood = [];
 var users = [];
 var leaderboard = [];
@@ -247,7 +248,7 @@ function setupSocket(socket) {
     });
 
     // Handle movement.
-    socket.on('serverTellPlayerMove', function (userData, foodsList, massList, virusList) {
+    socket.on('serverTellPlayerMove', function (userData, foodsList, massList, virusList,visibleWalls) {
         var playerData;
         for(var i =0; i< userData.length; i++) {
             if(typeof(userData[i].id) == "undefined") {
@@ -271,6 +272,7 @@ function setupSocket(socket) {
         foods = foodsList;
         viruses = virusList;
         fireFood = massList;
+        walls = visibleWalls;
     });
 
     // Death.
@@ -352,10 +354,18 @@ function drawPacMan(centerX, centerY, radius, sides) {
 }
 
 
+function drawWalls(walls) {
+    graph.strokeStyle = 'hsl(' + walls.hue + ', 100%, 45%)';
+    graph.fillStyle = 'hsl(' + walls.hue + ', 100%, 50%)';
+    graph.lineWidth = foodConfig.border;
+    graph.drawImage(bomb, 1242, 799+22*walls.hue, 22, 22, (walls.x - player.x + global.screenWidth / 2)-walls.radius-walls.radius/6,
+               (walls.y - player.y + global.screenHeight / 2)-walls.radius-walls.radius/3, walls.radius*2.5,walls.radius*2.5);
+}
 function drawFood(food) {
     graph.strokeStyle = 'hsl(' + food.hue + ', 100%, 45%)';
     graph.fillStyle = 'hsl(' + food.hue + ', 100%, 50%)';
     graph.lineWidth = foodConfig.border;
+    
 	drawQuad((food.x - player.x + global.screenWidth / 2),
                (food.y - player.y + global.screenHeight / 2),
                food.radius, global.foodSides);
@@ -368,17 +378,18 @@ function drawVirus(virus) {
    // drawCircle(virus.x - player.x + global.screenWidth / 2,
      //          virus.y - player.y + global.screenHeight / 2,
        //        virus.radius, global.virusSides);
-	graph.drawImage(bomb, (virus.x - player.x + global.screenWidth / 2)-virus.radius-virus.radius/6,
+	graph.drawImage(bomb, 1211, 1512, 118, 119, (virus.x - player.x + global.screenWidth / 2)-virus.radius-virus.radius/6,
                (virus.y - player.y + global.screenHeight / 2)-virus.radius-virus.radius/3, virus.radius*2.5, virus.radius*2.5);
 }
-
 function drawFireFood(mass) {
     graph.strokeStyle = 'hsl(' + mass.hue + ', 100%, 45%)';
     graph.fillStyle = 'hsl(' + mass.hue + ', 100%, 50%)';
     graph.lineWidth = playerConfig.border+10;
-    drawCircle(mass.x - player.x + global.screenWidth / 2,
-               mass.y - player.y + global.screenHeight / 2,
-               mass.radius-5, 18 + (~~(mass.masa/5)));
+  //  drawCircle(mass.x - player.x + global.screenWidth / 2,
+   //            mass.y - player.y + global.screenHeight / 2,
+     //          mass.radius-5, 18 + (~~(mass.masa/5)));
+	graph.drawImage(pac.img, mass.sprite.sx, mass.sprite.sy, mass.sprite.sw, mass.sprite.sh, mass.x - player.x + global.screenWidth / 2 - (mass.radius-5)-(mass.radius-5)*0.3,
+               mass.y - player.y + global.screenHeight / 2 - (mass.radius-5)-(mass.radius-5)*0.3, (mass.radius-5)*3, (mass.radius-5)*3);
 }
 
 function drawPlayers(order) {
@@ -431,7 +442,6 @@ function drawPlayers(order) {
         if(userCurrent.rot <= -3)graph.scale(-1,1);
         else graph.rotate(userCurrent.rot);
 		graph.drawImage(pac.img, userCurrent.sx,userCurrent.sy, userCurrent.sw, userCurrent.sh,-cellCurrent.radius,-cellCurrent.radius, cellCurrent.radius*2, cellCurrent.radius*2);
-		
 		recolor(x, y-cellCurrent.radius, cellCurrent.radius*2, cellCurrent.radius*2, graph.fillStyle);
         
         graph.lineJoin = 'round';
@@ -574,6 +584,7 @@ function gameLoop() {
 
             //drawgrid();
             foods.forEach(drawFood);
+            walls.forEach(drawWalls);
             fireFood.forEach(drawFireFood);
             viruses.forEach(drawVirus);
 
@@ -670,14 +681,18 @@ function hexToRgbA(hex){
 }
 function recolor(x, y, c1, c2, fillC) {
     var imgData = graph.getImageData(x, y, c1, c2);
-	//console.log(imgData);
 	var col = hexToRgbA(fillC);
 	for(var i = 0; i < imgData.data.length; i+=4){
-	if((imgData.data[i] >= 100 && imgData.data[i+1] >= 100 && imgData.data[i+2] >= 100) && (imgData.data[i] <= 255 && imgData.data[i+1] <= 255 && imgData.data[i+2] <= 255)){
+	if((imgData.data[i] != 245 && imgData.data[i+1] != 245 && imgData.data[i+2] != 245)&&(imgData.data[i] >= 201 && imgData.data[i+1] >= 201 && imgData.data[i+2] >= 201) && (imgData.data[i] <= 255 && imgData.data[i+1] <= 255 && imgData.data[i+2] <= 255)){
 	imgData.data[i] = col.r-(255-imgData.data[i]);
 	imgData.data[i+1] = col.g-(255-imgData.data[i+1]);
 	imgData.data[i+2] = col.b-(255-imgData.data[i+2]);
 	imgData.data[i+3] = 255;
+	}else{
+    imgData.data[i] = imgData.data[i];
+	imgData.data[i+1] = imgData.data[i+1];
+	imgData.data[i+2] = imgData.data[i+2];
+	imgData.data[i+3] = imgData.data[i+3];	
 	}
 	}
 
