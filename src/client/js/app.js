@@ -148,6 +148,7 @@ showMassSetting.onchange = settings.toggleMass;
 
 var c = window.canvas.cv;
 var graph = c.getContext('2d');
+window.test125 = 0;
 
 $( "#feed" ).click(function() {
     socket.emit('1');
@@ -334,7 +335,6 @@ function drawQuad(centerX, centerY, radius, sides) {
         graph.rect(x-radius*0.7, y-radius*1.7, radius*1.5, radius*1.5);
 
     graph.closePath();
-    graph.stroke();
     graph.fill();
 }
 
@@ -355,17 +355,20 @@ function drawPacMan(centerX, centerY, radius, sides) {
 
 
 function drawWalls(walls) {
-    //graph.strokeStyle = 'hsl(' + walls.hue + ', 100%, 45%)';
-    //graph.fillStyle = 'hsl(' + walls.hue + ', 100%, 50%)';
-   // graph.lineWidth = foodConfig.border;
-  //  graph.drawImage(bomb, 1242, 799+22*walls.hue, 22, 22, (walls.x - player.x + global.screenWidth / 2)-walls.radius-walls.radius/6,
-      //         (walls.y - player.y + global.screenHeight / 2)-walls.radius-walls.radius/3, walls.radius*2.5,walls.radius*2.5);
+    graph.strokeStyle = 'hsl(' + walls.hue + ', 100%, 45%)';
+    graph.fillStyle = 'hsl(' + walls.hue + ', 100%, 50%)';
+    graph.lineWidth = foodConfig.border;
+    graph.drawImage(bomb, 1242, 799+22*walls.hue, 22, 22, (walls.x - player.x + global.screenWidth / 2)-walls.radius-walls.radius/6,
+               (walls.y - player.y + global.screenHeight / 2)-walls.radius-walls.radius/3, walls.radius*2.5,walls.radius*2.5);
 }
 function drawFood(food) {
-    graph.strokeStyle = 'hsl(' + food.hue + ', 100%, 45%)';
+    //graph.strokeStyle = 'hsl(' + food.hue + ', 100%, 45%)';
     graph.fillStyle = 'hsl(' + food.hue + ', 100%, 50%)';
-    graph.lineWidth = foodConfig.border;
-    
+   // graph.lineWidth = foodConfig.border;
+    var ODZRadius = 0;
+            for(var ff=0; ff<player.cells.length; ff++) {
+				ODZRadius += player.cells[ff].radius;
+            }
 	drawQuad((food.x - player.x + global.screenWidth / 2),
                (food.y - player.y + global.screenHeight / 2),
                food.radius, global.foodSides);
@@ -393,6 +396,10 @@ function drawFireFood(mass) {
 }
 
 function drawPlayers(order) {
+	    var ODZRadius = 0;
+            for(var ff=0; ff<player.cells.length; ff++) {
+				ODZRadius += player.cells[ff].radius;
+            }
     var start = {
         x: player.x - (global.screenWidth / 2),
         y: player.y - (global.screenHeight / 2)
@@ -581,12 +588,18 @@ function gameLoop() {
         if (global.gameStart) {
             graph.fillStyle = global.backgroundColor;
             graph.fillRect(0, 0, global.screenWidth, global.screenHeight);
-
             //drawgrid();
+			var ODZRadius = 0;
+            for(var ff=0; ff<player.cells.length; ff++) {
+				ODZRadius += player.cells[ff].radius;
+            }
+			graph.save();
+            graph.scale(1/(ODZRadius/100),1/(ODZRadius/100));
+            graph.translate((global.screenWidth/(1/(ODZRadius/100))-global.screenWidth)/2,(global.screenHeight/(1/(ODZRadius/100))-global.screenHeight)/2);
+			
             foods.forEach(drawFood);
             walls.forEach(drawWalls);
             fireFood.forEach(drawFireFood);
-            viruses.forEach(drawVirus);
 
             if (global.borderDraw) {
                 drawborder();
@@ -605,6 +618,7 @@ function gameLoop() {
                 return obj1.mass - obj2.mass;
             });
 		    drawPlayers(orderMass);
+            viruses.forEach(drawVirus);
             //socket.emit('0', window.canvas.target); // playerSendTarget "Heartbeat".
 			
 			
@@ -614,6 +628,7 @@ function gameLoop() {
 				dir: global.moveToDir
 			};
 			socket.emit('0', playerPosition);
+			graph.restore();
         } else {
             graph.fillStyle = '#333333';
             graph.fillRect(0, 0, global.screenWidth, global.screenHeight);

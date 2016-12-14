@@ -35,7 +35,7 @@ var initMassLog = util.log(c.defaultPlayerMass, c.slowBase);
 
 app.use(express.static(__dirname + '/../client'));
 function addFood(toAdd) {
-var radius = util.massToRadius(c.foodMass);
+var radius = util.massToRadius(c.foodMass)/2;
 while (toAdd--) {
 var position;
 
@@ -116,6 +116,10 @@ function removeFood(toRem) {
 }
 
 function movePlayer(player) {
+    function funcWalls(f) {
+     //   return SAT.pointInCircle(new V(f.x, f.y), playerCircle);
+	 return false;
+    }
     var x =0,y =0;
     for(var i=0; i<player.cells.length; i++)
     {
@@ -223,11 +227,40 @@ function movePlayer(player) {
             deltaY *= dist / (50 + player.cells[i].radius);
             deltaX *= dist / (50 + player.cells[i].radius);
         }
+        
+        var currentCell = player.cells[i];
+        var playerCircle = new C(
+            new V(currentCell.x, currentCell.y),
+            currentCell.radius
+        );
+        var a = walls.map(funcWalls)
+            .reduce( function(a, b, c) { return b ? a.concat(c) : a; }, []);
+            
         if (!isNaN(deltaY)) {
+           
             player.cells[i].y += deltaY;
+            currentCell = player.cells[i];
+            playerCircle = new C(
+                new V(currentCell.x, currentCell.y),
+                currentCell.radius
+            );
+            a = walls.map(funcWalls)
+            .reduce( function(a, b, c) { return b ? a.concat(c) : a; }, []);
+            if(a.length > 0)
+                player.cells[i].y -= deltaY;
+                
         }
         if (!isNaN(deltaX)) {
             player.cells[i].x += deltaX;
+           currentCell = player.cells[i];
+           playerCircle = new C(
+                new V(currentCell.x, currentCell.y),
+                currentCell.radius
+            );
+            a = walls.map(funcWalls)
+            .reduce( function(a, b, c) { return b ? a.concat(c) : a; }, []);
+            if(a.length > 0)
+                player.cells[i].x -=deltaX;
         }
         // Find best solution.
         for(var j=0; j<player.cells.length; j++) {
@@ -573,7 +606,7 @@ io.on('connection', function (socket) {
                     x: cell.x,
                     y: cell.y,
                     radius: cell.radius,
-                    speed: 25
+                    speed: 50
                 });
             }
         }
@@ -602,13 +635,13 @@ function tickPlayer(currentPlayer) {
         sockets[currentPlayer.id].emit('kick', 'Last heartbeat received over ' + c.maxHeartbeatInterval + ' ago.');
         sockets[currentPlayer.id].disconnect();
     }
+	
 
     movePlayer(currentPlayer);
 
     function funcFood(f) {
         return SAT.pointInCircle(new V(f.x, f.y), playerCircle);
     }
-	
 	function shotFood(f) {
 		return { res: SAT.pointInCircle(new V(f.x, f.y), virusCircle), r: f };
     }
@@ -887,23 +920,26 @@ function sendUpdates() {
         // center the view if x/y is undefined, this will happen for spectators
         u.x = u.x || c.gameWidth / 2;
         u.y = u.y || c.gameHeight / 2;
-
+		    var ODZRadius = 0;
+            for(var ff=0; ff<u.cells.length; ff++) {
+				ODZRadius += u.cells[ff].radius;
+            }
         var visibleFood  = food
             .map(function(f) {
-                if ( f.x > u.x - u.screenWidth/2 - 20 &&
-                    f.x < u.x + u.screenWidth/2 + 20 &&
-                    f.y > u.y - u.screenHeight/2 - 20 &&
-                    f.y < u.y + u.screenHeight/2 + 20) {
+                if ( f.x > u.x - u.screenWidth/2 - 20 - ODZRadius*8&&
+                    f.x < u.x + u.screenWidth/2 + 20 + ODZRadius*8 &&
+                    f.y > u.y - u.screenHeight/2 - 20 - ODZRadius*8 &&
+                    f.y < u.y + u.screenHeight/2 + 20 + ODZRadius*8) {
                     return f;
                 }
             })
             .filter(function(f) { return f; });
         var visibleWalls  = walls
             .map(function(f) {
-                if ( f.x > u.x - u.screenWidth/2 - 22        &&
-                    f.x < u.x + u.screenWidth/2 + 22 &&
-                    f.y > u.y - u.screenHeight/2 - 440 &&
-                    f.y < u.y + u.screenHeight/2 + 440) {
+                if ( f.x > u.x - u.screenWidth/2 - 22 - ODZRadius*8       &&
+                    f.x < u.x + u.screenWidth/2 + 22 + ODZRadius*8 &&
+                    f.y > u.y - u.screenHeight/2 - 440 - ODZRadius*8 &&
+                    f.y < u.y + u.screenHeight/2 + 440 + ODZRadius*8) {
                     return f;
                 }
             })
@@ -912,10 +948,10 @@ function sendUpdates() {
 
         var visibleVirus  = virus
             .map(function(f) {
-                if ( f.x > u.x - u.screenWidth/2 - f.radius &&
-                    f.x < u.x + u.screenWidth/2 + f.radius &&
-                    f.y > u.y - u.screenHeight/2 - f.radius &&
-                    f.y < u.y + u.screenHeight/2 + f.radius) {
+                if ( f.x > u.x - u.screenWidth/2 - f.radius - ODZRadius*8 &&
+                    f.x < u.x + u.screenWidth/2 + f.radius + ODZRadius*8 &&
+                    f.y > u.y - u.screenHeight/2 - f.radius - ODZRadius*8 &&
+                    f.y < u.y + u.screenHeight/2 + f.radius + ODZRadius*8) {
                     return f;
                 }
             })
@@ -923,10 +959,10 @@ function sendUpdates() {
 
         var visibleMass = massFood
             .map(function(f) {
-                if ( f.x+f.radius > u.x - u.screenWidth/2 - 20 &&
-                    f.x-f.radius < u.x + u.screenWidth/2 + 20 &&
-                    f.y+f.radius > u.y - u.screenHeight/2 - 20 &&
-                    f.y-f.radius < u.y + u.screenHeight/2 + 20) {
+                if ( f.x+f.radius > u.x - u.screenWidth/2 - 20 - ODZRadius*8 &&
+                    f.x-f.radius < u.x + u.screenWidth/2 + 20 + ODZRadius*8 &&
+                    f.y+f.radius > u.y - u.screenHeight/2 - 20 - ODZRadius*8 &&
+                    f.y-f.radius < u.y + u.screenHeight/2 + 20 + ODZRadius*8) {
                     return f;
                 }
             })
@@ -936,10 +972,10 @@ function sendUpdates() {
             .map(function(f) {
                 for(var z=0; z<f.cells.length; z++)
                 {
-                    if ( f.cells[z].x+f.cells[z].radius > u.x - u.screenWidth/2 - 20 &&
-                        f.cells[z].x-f.cells[z].radius < u.x + u.screenWidth/2 + 20 &&
-                        f.cells[z].y+f.cells[z].radius > u.y - u.screenHeight/2 - 20 &&
-                        f.cells[z].y-f.cells[z].radius < u.y + u.screenHeight/2 + 20) {
+                    if ( f.cells[z].x+f.cells[z].radius > u.x - u.screenWidth/2 - 20 - ODZRadius*8 &&
+                        f.cells[z].x-f.cells[z].radius < u.x + u.screenWidth/2 + 20 + ODZRadius*8 &&
+                        f.cells[z].y+f.cells[z].radius > u.y - u.screenHeight/2 - 20 - ODZRadius*8 &&
+                        f.cells[z].y-f.cells[z].radius < u.y + u.screenHeight/2 + 20 + ODZRadius*8) {
                         z = f.cells.lenth;
                         if(f.id !== u.id) {
                             return {
